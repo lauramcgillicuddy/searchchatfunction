@@ -171,9 +171,28 @@ def parse_chatgpt_export(file_content):
                 if node.get("message"):
                     msg = node["message"]
                     if msg.get("content") and msg["content"].get("parts"):
+                        # Handle different types in parts array
+                        parts = msg["content"]["parts"]
+                        if isinstance(parts, list):
+                            content_parts = []
+                            for part in parts:
+                                if isinstance(part, str):
+                                    content_parts.append(part)
+                                elif isinstance(part, dict):
+                                    # Handle multimodal content
+                                    if "text" in part:
+                                        content_parts.append(part["text"])
+                                    else:
+                                        content_parts.append(str(part))
+                                else:
+                                    content_parts.append(str(part))
+                            content = " ".join(content_parts)
+                        else:
+                            content = str(parts)
+
                         messages.append({
                             "role": msg.get("author", {}).get("role", "unknown"),
-                            "content": " ".join(msg["content"]["parts"]) if isinstance(msg["content"]["parts"], list) else str(msg["content"]["parts"]),
+                            "content": content,
                             "timestamp": msg.get("create_time", 0)
                         })
 
